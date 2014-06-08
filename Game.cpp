@@ -106,67 +106,46 @@ void Game::load (int index, QString name) {
 	glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
 	glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
 }
-void Game::keyPressEvent (QKeyEvent *event) {
+void Game::key (QKeyEvent *event, bool pressed) {
+	event->accept ();
 	switch (event->key ()) {
 	case Qt::Key_W:
-		this->m_players [0].m_keyUp = true;
+		this->m_players [0].m_keyUp = pressed;
 		break;
 	case Qt::Key_A:
-		this->m_players [0].m_keyLeft = true;
+		this->m_players [0].m_keyLeft = pressed;
 		break;
 	case Qt::Key_S:
-		this->m_players [0].m_keyDown = true;
+		this->m_players [0].m_keyDown = pressed;
 		break;
 	case Qt::Key_D:
-		this->m_players [0].m_keyRight = true;
+		this->m_players [0].m_keyRight = pressed;
+		break;
+	case Qt::Key_Shift:
+		this->m_players [0].m_keyBomb = pressed;
 		break;
 	case Qt::Key_Up:
-		this->m_players [1].m_keyUp = true;
+		this->m_players [1].m_keyUp = pressed;
 		break;
 	case Qt::Key_Left:
-		this->m_players [1].m_keyLeft = true;
+		this->m_players [1].m_keyLeft = pressed;
 		break;
 	case Qt::Key_Down:
-		this->m_players [1].m_keyDown = true;
+		this->m_players [1].m_keyDown = pressed;
 		break;
 	case Qt::Key_Right:
-		this->m_players [1].m_keyRight = true;
+		this->m_players [1].m_keyRight = pressed;
 		break;
 	case Qt::Key_Space:
-		this->m_players [1].m_keyBomb = true;
+		this->m_players [1].m_keyBomb = pressed;
 		break;
 	}
 }
+void Game::keyPressEvent (QKeyEvent *event) {
+	key (event, true);
+}
 void Game::keyReleaseEvent (QKeyEvent *event) {
-	switch (event->key ()) {
-	case Qt::Key_W:
-		this->m_players [0].m_keyUp = false;
-		break;
-	case Qt::Key_A:
-		this->m_players [0].m_keyLeft = false;
-		break;
-	case Qt::Key_S:
-		this->m_players [0].m_keyDown = false;
-		break;
-	case Qt::Key_D:
-		this->m_players [0].m_keyRight = false;
-		break;
-	case Qt::Key_Up:
-		this->m_players [1].m_keyUp = false;
-		break;
-	case Qt::Key_Left:
-		this->m_players [1].m_keyLeft = false;
-		break;
-	case Qt::Key_Down:
-		this->m_players [1].m_keyDown = false;
-		break;
-	case Qt::Key_Right:
-		this->m_players [1].m_keyRight = false;
-		break;
-	case Qt::Key_Space:
-		this->m_players [1].m_keyBomb = false;
-		break;
-	}
+	key (event, false);
 }
 void Game::Player::update (Game *game) {
 	int speed = 4;

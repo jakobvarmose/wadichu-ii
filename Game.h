@@ -15,8 +15,9 @@ protected:
 	void paintGL ();
 	void resizeGL (int w, int h);
 	void initializeGL ();
-	void keyPressEvent (QKeyEvent *);
-	void keyReleaseEvent (QKeyEvent *);
+	void key (QKeyEvent *event, bool pressed);
+	void keyPressEvent (QKeyEvent *event);
+	void keyReleaseEvent (QKeyEvent *event);
 	void timerEvent (QTimerEvent *);
 private:
 	class Bomb {
