@@ -2,7 +2,7 @@
 #pragma once
 
 #include <QMainWindow>
-#include "Game.h"
+#include "GameView.h"
 
 class Window : public QMainWindow {
 	Q_OBJECT
@@ -12,6 +12,6 @@ private slots:
 	void fullScreen ();
 	void newGame ();
 private:
-	Game *m_game;
+	GameView *m_game;
 	QMenuBar *m_bar;
 };

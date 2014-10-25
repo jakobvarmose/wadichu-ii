@@ -1,11 +1,13 @@
+QMAKE_CXXFLAGS += --std=c++11
 QT += opengl phonon
-
 SOURCES += \
     main.cpp \
-    Game.cpp \
-    Window.cpp
+    Window.cpp \
+    GameModel.cpp \
+    GameView.cpp
 
 HEADERS += \
     main.h \
-    Game.h \
-    Window.h
+    Window.h \
+    GameModel.h \
+    GameView.h

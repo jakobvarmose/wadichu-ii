@@ -34,6 +34,6 @@ void Window::fullScreen () {
 	}
 }
 void Window::newGame () {
-	this->m_game = new Game (this);
+	this->m_game = new GameView (this);
 	this->setCentralWidget (this->m_game);
 }

@@ -2,7 +2,6 @@
 #include "main.h"
 
 #include <QApplication>
-#include <QSound>
 #include "Window.h"
 
 #include <QtDebug>
