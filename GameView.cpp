@@ -33,13 +33,25 @@ void GameView::paintGL () {
 			} else if (tile.type == 1) {
 				this->draw (this->m_texs [1], 32 * x, 32 * y, 32, 32);
 			}
+			if (tile.type == 0) {
+				if (tile.item == ITEM_PLUSBOMB) {
+					this->draw (this->m_texs [22], 32 * x, 32 * y, 32, 32);
+				} else if (tile.item == ITEM_PLUSLENGTH) {
+					this->draw (this->m_texs [31], 32 * x, 32 * y, 32, 32);
+				}
+			}
 			if (this->model.tiles [x] [y].fire) {
 				this->draw (this->m_texs [7], 32 * x, 32 * y, 32, 32);
 			}
 		}
 	}
-	for (const GameModel::Bomb &bomb : this->model.bombs) {
-		this->draw (this->m_texs [5], bomb.x, bomb.y, 32, 32);
+	for (int x = 0; x < 19; ++x) {
+		for (int y = 0; y < 19; ++y) {
+			const GameModel::Tile &tile = this->model.tiles [x] [y];
+			if (tile.bomb) {
+				this->draw (this->m_texs [5], 32 * x, 32 * y, 32, 32);
+			}
+		}
 	}
 	for (const GameModel::Monster *monster : this->model.monsters) {
 		this->draw (this->m_texs [11], monster->x, monster->y, 32, 32);
@@ -68,34 +80,13 @@ void GameView::initializeGL () {
 	this->load (5, "0034.bmp");
 	this->load (7, "fire.png");
 	this->load (11, "0027.bmp");
+	this->load (22, "0022.bmp");
+	this->load (31, "0031.bmp");
 	glClearColor (0, 0, 0, 1);
 	glBlendFunc (GL_ONE, GL_ONE);
 	glEnable (GL_BLEND);
 	glDisable (GL_DEPTH_TEST);
-	for (int x = 0; x < 19; ++x) {
-		for (int y = 0; y < 19; ++y) {
-			if (
-				x == 0 ||
-				x == 18 ||
-				y == 0 ||
-				y == 18 ||
-				x % 2 == 0 && y % 2 == 0
-			) {
-				model.tiles [x] [y].type = 3;
-			} else if (
-				(x <= 2 || x >= 16) &&
-				(y <= 2 || y >= 16)
-			) {
-				model.tiles [x] [y].type = 0;
-			} else {
-				if (rand () % 1000 < 700) {
-					model.tiles [x] [y].type = 0;
-				} else {
-					model.tiles [x] [y].type = 1;
-				}
-			}
-		}
-	}
+	this->model.start ();
 }
 void GameView::load (int index, QString name) {
 	m_texs [index] = this->bindTexture (
@@ -109,34 +100,34 @@ void GameView::key (QKeyEvent *event, bool pressed) {
 	event->accept ();
 	switch (event->key ()) {
 	case Qt::Key_W:
-		this->model.players [0].m_keyUp = pressed;
+		this->model.players [0].keyUp = pressed;
 		break;
 	case Qt::Key_A:
-		this->model.players [0].m_keyLeft = pressed;
+		this->model.players [0].keyLeft = pressed;
 		break;
 	case Qt::Key_S:
-		this->model.players [0].m_keyDown = pressed;
+		this->model.players [0].keyDown = pressed;
 		break;
 	case Qt::Key_D:
-		this->model.players [0].m_keyRight = pressed;
+		this->model.players [0].keyRight = pressed;
 		break;
 	case Qt::Key_Shift:
-		this->model.players [0].m_keyBomb = pressed;
+		this->model.players [0].keyBomb = pressed;
 		break;
 	case Qt::Key_Up:
-		this->model.players [1].m_keyUp = pressed;
+		this->model.players [1].keyUp = pressed;
 		break;
 	case Qt::Key_Left:
-		this->model.players [1].m_keyLeft = pressed;
+		this->model.players [1].keyLeft = pressed;
 		break;
 	case Qt::Key_Down:
-		this->model.players [1].m_keyDown = pressed;
+		this->model.players [1].keyDown = pressed;
 		break;
 	case Qt::Key_Right:
-		this->model.players [1].m_keyRight = pressed;
+		this->model.players [1].keyRight = pressed;
 		break;
 	case Qt::Key_Space:
-		this->model.players [1].m_keyBomb = pressed;
+		this->model.players [1].keyBomb = pressed;
 		break;
 	}
 }

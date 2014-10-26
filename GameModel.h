@@ -3,52 +3,61 @@
 
 #include <QList>
 
+#define TYPE_EMPTY      0
+#define TYPE_SOLID      1
+#define TYPE_IMMUNE     3
+
+#define ITEM_NONE       0
+#define ITEM_PLUSBOMB   1
+#define ITEM_PLUSLENGTH 2
+
 class GameModel {
 public:
 	GameModel ();
+	void start ();
 	void update ();
 	void fire (QSet<int> &res, int x, int y, int xi, int yi, int length);
-	class Bomb {
-	public:
-		int x, y;
-		int length;
-		int count;
-		Bomb () : x (0), y (0), count (0), length (2) {
-		}
-		Bomb (int x, int y, int count) : x (x), y (y), count (count), length (2) {
-		}
-	};
 	class Player {
 	public:
 		int x, y;
 		bool keyUp, keyLeft, keyDown, keyRight;
 		bool keyBomb;
 		int bombCount;
+		int bombLength;
 		Player () :
 			x (0), y (0),
 			keyUp (false), keyLeft (false),
 			keyDown (false), keyRight (false),
-			keyBomb (false), bombCount (10)
+			keyBomb (false), bombCount (1), bombLength (2)
 		{
 		}
 		void update (GameModel *game);
 	};
-	class Fire {
-	public:
-		int x, y;
-	};
 	class Tile {
 	public:
 		int type;
+		int item;
 		bool fire;
 		bool bomb;
-		Tile () : type (3), fire (false), bomb (false) {
+		int bombCount;
+		int fireCount;
+		int bombLength;
+		Player *player;
+		Tile () : type (3), item (0), fire (false), bomb (false) {
 		}
-		bool empty () {
+		bool empty () const {
 			return this->type == 0 && this->bomb == false;
 		}
-		bool solid () {
+		bool solid () const {
 			return this->type == 3;
+		}
+		void update () {
+			if (this->bombCount) {
+				--bombCount;
+				if (!this->bombCount) {
+					
+				}
+			}
 		}
 	};
 	class Monster {
@@ -59,8 +68,6 @@ public:
 		}
 	};
 	Tile tiles [19] [19];
-	QList <Bomb> bombs;
 	QList <Player> players;
-	QList <Fire *> fires;
 	QList <Monster *> monsters;
 };
