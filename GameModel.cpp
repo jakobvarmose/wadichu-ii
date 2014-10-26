@@ -22,34 +22,45 @@ void GameModel::start () {
 				y == 18 ||
 				(x % 2 == 0 && y % 2 == 0)
 			) {
-				this->tiles [x] [y].type = 3;
-				this->tiles [x] [y].item = ITEM_NONE;
+				this->tiles [x] [y].type = TypeEnum::Immune;
+				this->tiles [x] [y].item = ItemEnum::None;
 			} else if (
 				(x <= 2 || x >= 16) &&
 				(y <= 2 || y >= 16)
 			) {
-				this->tiles [x] [y].type = 0;
-				this->tiles [x] [y].item = ITEM_NONE;
+				this->tiles [x] [y].type = TypeEnum::Empty;
+				this->tiles [x] [y].item = ItemEnum::None;
 			} else {
 				if (rand () % 1000 < 700) {
-					this->tiles [x] [y].type = 0;
-					this->tiles [x] [y].item = ITEM_NONE;
+					this->tiles [x] [y].type = TypeEnum::Empty;
+					this->tiles [x] [y].item = ItemEnum::None;
 				} else {
-					this->tiles [x] [y].type = 1;
+					this->tiles [x] [y].type = TypeEnum::Solid;
 					int q = rand () % 1000;
 					if (q < 200) {
-						this->tiles [x] [y].item = ITEM_PLUSBOMB;
+						this->tiles [x] [y].item = ItemEnum::PlusBomb;
 					} else if (q < 400) {
-						this->tiles [x] [y].item = ITEM_PLUSLENGTH;
+						this->tiles [x] [y].item = ItemEnum::PlusLength;
+					} else if (q < 420) {
+						this->tiles [x] [y].item = ItemEnum::PlusLife;
 					} else {
-						this->tiles [x] [y].item = ITEM_NONE;
+						this->tiles [x] [y].item = ItemEnum::None;
 					}
 				}
 			}
 		}
 	}
 	for (int i = 0; i < 10; ++i) {
-		this->monsters.push_back (new Monster (64 * i + 32, 32));
+		MonsterEnum type;
+		int q = rand () % 1000;
+		if (q < 500) {
+			type = MonsterEnum::Lithor;
+		} else if (q < 750) {
+			type = MonsterEnum::Cr;
+		} else {
+			type = MonsterEnum::Fish;
+		}
+		this->monsters.push_back (new Monster (type, 64 * i + 32, 32));
 	}
 }
 void GameModel::update () {
@@ -60,7 +71,7 @@ void GameModel::update () {
 				tile.fireCount--;
 				if (tile.fireCount == 0) {
 					tile.fire = false;
-					tile.type = 0;
+					tile.type = TypeEnum::Empty;
 				}
 			}
 		}
@@ -90,6 +101,12 @@ void GameModel::update () {
 			}
 		}
 	}
+	for (int i = 0; i < this->monsters.size (); ++i) {
+		this->monsters [i]->update (*this);
+		if (!this->monsters [i]->alive && !this->tiles [(this->monsters [i]->x + 16) / 32] [(this->monsters [i]->y + 16) / 32].fire) {
+			this->monsters.removeAt (i--);
+		}
+	}
 	for (int i = 0; i != this->players.size (); ++i) {
 		this->players [i].update (this);
 	}
@@ -109,6 +126,45 @@ void GameModel::fire (QSet<int> &res, int x, int y, int xi, int yi, int length) 
 			fire (res, x, y, -1, 0, tile.bombLength);
 			fire (res, x, y, 0, 1, tile.bombLength);
 			fire (res, x, y, 0, -1, tile.bombLength);
+		}
+	}
+}
+void GameModel::Monster::update (GameModel &game) {
+	if (this->alive) {
+		if (this->x % 32 == 0 && this->y % 32 == 0) {
+			int x = this->x / 32;
+			int y = this->y / 32;
+			QList <QPair <int, int>> dirs;
+			if (xi >= 0 && game.tiles [x + 1] [y].empty ()) {
+				dirs.append (qMakePair (1, 0));
+			}
+			if (xi <= 0 && game.tiles [x - 1] [y].empty ()) {
+				dirs.append (qMakePair (-1, 0));
+			}
+			if (yi >= 0 && game.tiles [x] [y + 1].empty ()) {
+				dirs.append (qMakePair (0, 1));
+			}
+			if (yi <= 0 && game.tiles [x] [y - 1].empty ()) {
+				dirs.append (qMakePair (0, -1));
+			}
+			if (dirs.isEmpty ()) {
+				if (game.tiles [x - this->xi] [y - this->yi].empty ()) {
+					dirs.append (qMakePair (-this->xi, -this->yi));
+				}
+			}
+			if (dirs.isEmpty ()) {
+				this->xi = 0;
+				this->yi = 0;
+			} else {
+				QPair <int, int> dir = dirs.at (rand () % dirs.count ());
+				this->xi = dir.first;
+				this->yi = dir.second;
+			}
+		}
+		this->x += xi;
+		this->y += yi;
+		if (game.tiles [(this->x + 16) / 32] [(this->y + 16) / 32].fire) {
+			this->alive = false;
 		}
 	}
 }
@@ -158,11 +214,61 @@ void GameModel::Player::update (GameModel *game) {
 		tile.bombLength = this->bombLength;
 		tile.player = this;
 	}
-	if (tile.item == ITEM_PLUSBOMB) {
+	if (tile.item == ItemEnum::PlusBomb) {
 		this->bombCount++;
-		tile.item = ITEM_NONE;
-	} else if (tile.item == ITEM_PLUSLENGTH) {
+		tile.item = ItemEnum::None;
+	} else if (tile.item == ItemEnum::PlusLength) {
 		this->bombLength++;
-		tile.item = ITEM_NONE;
+		tile.item = ItemEnum::None;
+	} else if (tile.item == ItemEnum::PlusLife) {
+		this->lives++;
+		tile.item = ItemEnum::None;
 	}
+}
+LevelSet::LevelSet (const QByteArray &data) {
+	QDataStream stream (data);
+	stream >> this->version;
+	quint8 levelsSize;
+	stream >> levelsSize;
+	for (int i = 0; i < levelsSize; ++i) {
+		Level level;
+		for (int x = 0; x < 19; ++x) {
+			for (int y = 0; y < 19; ++y) {
+				stream >> level.tiles [x] [y].type;
+				stream >> level.tiles [x] [y].item;
+			}
+		}
+		quint8 monstersSize;
+		stream >> monstersSize;
+		for (int i = 0; i < monstersSize; ++i) {
+			Level::Monster monster;
+			stream >> monster.type;
+			stream >> monster.x;
+			stream >> monster.y;
+			level.monsters.append (monster);
+		}
+		this->levels.append (level);
+	}
+}
+QByteArray LevelSet::serialize () const {
+	QByteArray data;
+	QDataStream stream (&data, QIODevice::WriteOnly);
+	stream << version;
+	stream << quint8 (levels.size ());
+	for (const Level &level : this->levels) {
+		for (int x = 0; x < 19; ++x) {
+			for (int y = 0; y < 19; ++y) {
+				const Level::Tile &tile = level.tiles [x] [y];
+				stream << tile.type;
+				stream << tile.item;
+			}
+		}
+		stream << quint8 (level.monsters.size ());
+		for (const Level::Monster &monster : level.monsters) {
+			stream << monster.type;
+			stream << monster.x;
+			stream << monster.y;
+		}
+	}
+	return data;
 }

@@ -14,6 +14,9 @@ int main (int argc, char **argv) {
 	Phonon::AudioOutput output (Phonon::MusicCategory);
 	Phonon::createPath (&media, &output);
 	//media.enqueue (Phonon::MediaSource ("../tracks/DST-Aurora.mp3"));
+	LevelSet set (QByteArray (""));
+	qDebug () << set.serialize ().toHex ();
+	qDebug () << sizeof (set);
 	media.play ();
 	Window win;
 	win.show ();

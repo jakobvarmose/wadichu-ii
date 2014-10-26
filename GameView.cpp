@@ -28,16 +28,17 @@ void GameView::paintGL () {
 	for (int x = 0; x < 19; ++x) {
 		for (int y = 0; y < 19; ++y) {
 			const GameModel::Tile &tile = this->model.tiles [x] [y];
-			if (tile.type == 3) {
+			if (tile.type == TypeEnum::Immune) {
 				this->draw (this->m_texs [3], 32 * x, 32 * y, 32, 32);
-			} else if (tile.type == 1) {
+			} else if (tile.type == TypeEnum::Solid) {
 				this->draw (this->m_texs [1], 32 * x, 32 * y, 32, 32);
-			}
-			if (tile.type == 0) {
-				if (tile.item == ITEM_PLUSBOMB) {
+			} else if (tile.type == TypeEnum::Empty) {
+				if (tile.item == ItemEnum::PlusBomb) {
+					this->draw (this->m_texs [21], 32 * x, 32 * y, 32, 32);
+				} else if (tile.item == ItemEnum::PlusLength) {
 					this->draw (this->m_texs [22], 32 * x, 32 * y, 32, 32);
-				} else if (tile.item == ITEM_PLUSLENGTH) {
-					this->draw (this->m_texs [31], 32 * x, 32 * y, 32, 32);
+				} else if (tile.item == ItemEnum::PlusLife) {
+					this->draw (this->m_texs [23], 32 * x, 32 * y, 32, 32);
 				}
 			}
 			if (this->model.tiles [x] [y].fire) {
@@ -54,7 +55,40 @@ void GameView::paintGL () {
 		}
 	}
 	for (const GameModel::Monster *monster : this->model.monsters) {
-		this->draw (this->m_texs [11], monster->x, monster->y, 32, 32);
+		if (monster->type == MonsterEnum::Cr) {
+			this->draw (this->m_texs [11], monster->x, monster->y, 32, 32);
+		} else if (monster->type == MonsterEnum::Fish) {
+			glBindTexture (GL_TEXTURE_2D, this->m_texs [12]);
+			glPushMatrix ();
+			glTranslatef (monster->x, monster->y, 0);
+			glScalef (32, 32, 1);
+			glBegin (GL_TRIANGLE_STRIP);
+			if (monster->xi < 0) {
+				glTexCoord2f (0, 0); glVertex2f (0, 0);
+				glTexCoord2f (1, 0); glVertex2f (1, 0);
+				glTexCoord2f (0, 1); glVertex2f (0, 1);
+				glTexCoord2f (1, 1); glVertex2f (1, 1);
+			} else if (monster->xi > 0) {
+				glTexCoord2f (1, 0); glVertex2f (0, 0);
+				glTexCoord2f (0, 0); glVertex2f (1, 0);
+				glTexCoord2f (1, 1); glVertex2f (0, 1);
+				glTexCoord2f (0, 1); glVertex2f (1, 1);
+			} else if (monster->yi < 0) {
+				glTexCoord2f (0, 1); glVertex2f (0, 0);
+				glTexCoord2f (0, 0); glVertex2f (1, 0);
+				glTexCoord2f (1, 1); glVertex2f (0, 1);
+				glTexCoord2f (1, 0); glVertex2f (1, 1);
+			} else {
+				glTexCoord2f (1, 1); glVertex2f (0, 0);
+				glTexCoord2f (1, 0); glVertex2f (1, 0);
+				glTexCoord2f (0, 1); glVertex2f (0, 1);
+				glTexCoord2f (0, 0); glVertex2f (1, 1);
+			}
+			glEnd ();
+			glPopMatrix ();
+		} else if (monster->type == MonsterEnum::Lithor) {
+			this->draw (this->m_texs [13], monster->x, monster->y, 32, 32);
+		}
 	}
 	for (const GameModel::Player &player : this->model.players) {
 		this->draw (this->m_texs [4], player.x, player.y, 32, 32);
@@ -75,13 +109,18 @@ void GameView::resizeGL (int width, int height) {
 }
 void GameView::initializeGL () {
 	this->load (1, "0029.png");
+	this->load (2, "0006.png");
 	this->load (3, "0021.png");
 	this->load (4, "0016.png");
 	this->load (5, "0034.bmp");
 	this->load (7, "fire.png");
 	this->load (11, "0027.bmp");
-	this->load (22, "0022.bmp");
-	this->load (31, "0031.bmp");
+	this->load (12, "0028.bmp");
+	this->load (13, "0038.bmp");
+	this->load (14, "0030.bmp");
+	this->load (21, "0022.bmp");
+	this->load (22, "0031.bmp");
+	this->load (23, "0015.png");
 	glClearColor (0, 0, 0, 1);
 	glBlendFunc (GL_ONE, GL_ONE);
 	glEnable (GL_BLEND);

@@ -3,13 +3,26 @@
 
 #include <QList>
 
-#define TYPE_EMPTY      0
-#define TYPE_SOLID      1
-#define TYPE_IMMUNE     3
 
-#define ITEM_NONE       0
-#define ITEM_PLUSBOMB   1
-#define ITEM_PLUSLENGTH 2
+enum class TypeEnum {
+	Empty,
+	Solid,
+	Immune = 3
+};
+
+enum class ItemEnum {
+	None,
+	PlusBomb,
+	PlusLength,
+	PlusLife
+};
+
+enum class MonsterEnum {
+	Cr = 1,
+	Fish,
+	Lithor,
+	Statue
+};
 
 class GameModel {
 public:
@@ -24,50 +37,70 @@ public:
 		bool keyBomb;
 		int bombCount;
 		int bombLength;
+		int lives;
 		Player () :
 			x (0), y (0),
 			keyUp (false), keyLeft (false),
 			keyDown (false), keyRight (false),
-			keyBomb (false), bombCount (1), bombLength (2)
+			keyBomb (false), bombCount (1), bombLength (2), lives (0)
 		{
 		}
 		void update (GameModel *game);
 	};
 	class Tile {
 	public:
-		int type;
-		int item;
+		TypeEnum type;
+		ItemEnum item;
 		bool fire;
 		bool bomb;
 		int bombCount;
 		int fireCount;
 		int bombLength;
 		Player *player;
-		Tile () : type (3), item (0), fire (false), bomb (false) {
+		Tile () : type (TypeEnum::Immune), item (ItemEnum::None), fire (false), bomb (false) {
 		}
 		bool empty () const {
-			return this->type == 0 && this->bomb == false;
+			return this->type == TypeEnum::Empty && this->bomb == false;
 		}
 		bool solid () const {
-			return this->type == 3;
+			return this->type == TypeEnum::Immune;
 		}
 		void update () {
-			if (this->bombCount) {
-				--bombCount;
-				if (!this->bombCount) {
-					
-				}
-			}
 		}
 	};
 	class Monster {
 	public:
+		bool alive;
+		MonsterEnum type;
 		int x, y;
-		int type;
-		Monster (int x, int y) : x (x), y (y) {
+		int xi, yi;
+		Monster (MonsterEnum type, int x, int y) : alive (true), type (type), x (x), y (y), xi (0), yi (0) {
 		}
+		void update (GameModel &model);
 	};
 	Tile tiles [19] [19];
 	QList <Player> players;
 	QList <Monster *> monsters;
+};
+
+struct Level {
+	struct Tile {
+		quint8 type;
+		quint8 item;
+	};
+	struct Monster {
+		quint8 type;
+		quint8 x;
+		quint8 y;
+	};
+	Tile tiles [19] [19];
+	QList <Monster> monsters;
+};
+
+class LevelSet {
+public:
+	QList <Level> levels;
+	quint16 version;
+	LevelSet (const QByteArray &data);
+	QByteArray serialize () const;
 };
