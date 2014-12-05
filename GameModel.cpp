@@ -1,6 +1,7 @@
 // Copyright 2014 Jakob Varmose Bentzen | Released under the MIT License
 #include "GameModel.h"
 
+#include <QDataStream>
 #include <QSet>
 
 GameModel::GameModel () {
@@ -31,8 +32,12 @@ void GameModel::start () {
 				this->tiles [x] [y].type = TypeEnum::Empty;
 				this->tiles [x] [y].item = ItemEnum::None;
 			} else {
-				if (rand () % 1000 < 700) {
+				int r = rand () % 1000;
+				if (r < 700) {
 					this->tiles [x] [y].type = TypeEnum::Empty;
+					this->tiles [x] [y].item = ItemEnum::None;
+				} else if (r < 720) {
+					this->tiles [x] [y].type = TypeEnum::Statue;
 					this->tiles [x] [y].item = ItemEnum::None;
 				} else {
 					this->tiles [x] [y].type = TypeEnum::Solid;
@@ -53,12 +58,12 @@ void GameModel::start () {
 	for (int i = 0; i < 10; ++i) {
 		MonsterEnum type;
 		int q = rand () % 1000;
-		if (q < 500) {
-			type = MonsterEnum::Lithor;
-		} else if (q < 750) {
+		if (q < 250) {
 			type = MonsterEnum::Cr;
-		} else {
+		} else if (q < 500) {
 			type = MonsterEnum::Fish;
+		} else {
+			type = MonsterEnum::Lithor;
 		}
 		this->monsters.push_back (new Monster (type, 64 * i + 32, 32));
 	}
@@ -159,6 +164,17 @@ void GameModel::Monster::update (GameModel &game) {
 				QPair <int, int> dir = dirs.at (rand () % dirs.count ());
 				this->xi = dir.first;
 				this->yi = dir.second;
+			}
+			if (this->type == MonsterEnum::Lithor) {
+				for (const Player &player : game.players) {
+					if (player.x > this->x + 16 && player.x < this->x + 80
+					 && player.y > this->y - 16 && player.y < this->y + 16) {
+						this->shootingTimer = 100;
+						this->shootingDir = 4;
+						this->xi = 0;
+						this->yi = 0;
+					}
+				}
 			}
 		}
 		this->x += xi;

@@ -1,5 +1,5 @@
 QMAKE_CXXFLAGS += --std=c++11
-QT += opengl phonon
+QT += opengl
 SOURCES += \
     main.cpp \
     Window.cpp \

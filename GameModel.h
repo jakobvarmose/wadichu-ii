@@ -7,7 +7,8 @@
 enum class TypeEnum {
 	Empty,
 	Solid,
-	Immune = 3
+	Statue,
+	Immune
 };
 
 enum class ItemEnum {
@@ -21,7 +22,7 @@ enum class MonsterEnum {
 	Cr = 1,
 	Fish,
 	Lithor,
-	Statue
+	Fireball
 };
 
 class GameModel {
@@ -74,7 +75,9 @@ public:
 		MonsterEnum type;
 		int x, y;
 		int xi, yi;
-		Monster (MonsterEnum type, int x, int y) : alive (true), type (type), x (x), y (y), xi (0), yi (0) {
+		int shootingTimer;
+		int shootingDir;
+		Monster (MonsterEnum type, int x, int y) : alive (true), type (type), x (x), y (y), xi (0), yi (0), shootingDir (0) {
 		}
 		void update (GameModel &model);
 	};

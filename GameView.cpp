@@ -28,10 +28,12 @@ void GameView::paintGL () {
 	for (int x = 0; x < 19; ++x) {
 		for (int y = 0; y < 19; ++y) {
 			const GameModel::Tile &tile = this->model.tiles [x] [y];
-			if (tile.type == TypeEnum::Immune) {
-				this->draw (this->m_texs [3], 32 * x, 32 * y, 32, 32);
-			} else if (tile.type == TypeEnum::Solid) {
+			if (tile.type == TypeEnum::Solid) {
 				this->draw (this->m_texs [1], 32 * x, 32 * y, 32, 32);
+			} else if (tile.type == TypeEnum::Statue) {
+				this->draw (this->m_texs [2], 32 * x, 32 * y, 32, 32);
+			} else if (tile.type == TypeEnum::Immune) {
+				this->draw (this->m_texs [3], 32 * x, 32 * y, 32, 32);
 			} else if (tile.type == TypeEnum::Empty) {
 				if (tile.item == ItemEnum::PlusBomb) {
 					this->draw (this->m_texs [21], 32 * x, 32 * y, 32, 32);
@@ -88,6 +90,20 @@ void GameView::paintGL () {
 			glPopMatrix ();
 		} else if (monster->type == MonsterEnum::Lithor) {
 			this->draw (this->m_texs [13], monster->x, monster->y, 32, 32);
+			if (monster->shootingDir != 0) {
+				glBindTexture (GL_TEXTURE_2D, this->m_texs [14]);
+				glPushMatrix ();
+				glTranslatef (monster->x + 16, monster->y + 16, 0);
+				glScalef (32, 32, 1);
+				glRotatef ((monster->shootingDir - 1) * 90, 0, 0, 1);
+				glBegin (GL_TRIANGLE_STRIP);
+				glTexCoord2f (0, 0); glVertex2f (-0.5,  0.5);
+				glTexCoord2f (1, 0); glVertex2f ( 0.5,  0.5);
+				glTexCoord2f (0, 1); glVertex2f (-0.5,  2.5);
+				glTexCoord2f (1, 1); glVertex2f ( 0.5,  2.5);
+				glEnd ();
+				glPopMatrix ();
+			}
 		}
 	}
 	for (const GameModel::Player &player : this->model.players) {
@@ -109,7 +125,7 @@ void GameView::resizeGL (int width, int height) {
 }
 void GameView::initializeGL () {
 	this->load (1, "0029.png");
-	this->load (2, "0006.png");
+	this->load (2, "0012.png");
 	this->load (3, "0021.png");
 	this->load (4, "0016.png");
 	this->load (5, "0034.bmp");
