@@ -114,17 +114,34 @@ void GameModel::Monster::update (GameModel &game) {
 					int x = this->x / 32;
 					int y = this->y / 32;
 					QList <QPair <int, int>> dirs;
-					if (xi >= 0 && game.tiles [x + 1] [y].empty ()) {
-						dirs.append (qMakePair (1, 0));
+					const Player *player = this->closestPlayer (game);
+					if (player) {
+						if (player->x > this->x && game.tiles [x + 1] [y].empty ()) {
+							dirs.append (qMakePair (1, 0));
+						}
+						if (player->x < this->x && game.tiles [x - 1] [y].empty ()) {
+							dirs.append (qMakePair (-1, 0));
+						}
+						if (player->y > this->y && game.tiles [x] [y + 1].empty ()) {
+							dirs.append (qMakePair (0, 1));
+						}
+						if (player->y < this->y && game.tiles [x] [y - 1].empty ()) {
+							dirs.append (qMakePair (0, -1));
+						}
 					}
-					if (xi <= 0 && game.tiles [x - 1] [y].empty ()) {
-						dirs.append (qMakePair (-1, 0));
-					}
-					if (yi >= 0 && game.tiles [x] [y + 1].empty ()) {
-						dirs.append (qMakePair (0, 1));
-					}
-					if (yi <= 0 && game.tiles [x] [y - 1].empty ()) {
-						dirs.append (qMakePair (0, -1));
+					if (dirs.isEmpty ()) {
+						if (xi >= 0 && game.tiles [x + 1] [y].empty ()) {
+							dirs.append (qMakePair (1, 0));
+						}
+						if (xi <= 0 && game.tiles [x - 1] [y].empty ()) {
+							dirs.append (qMakePair (-1, 0));
+						}
+						if (yi >= 0 && game.tiles [x] [y + 1].empty ()) {
+							dirs.append (qMakePair (0, 1));
+						}
+						if (yi <= 0 && game.tiles [x] [y - 1].empty ()) {
+							dirs.append (qMakePair (0, -1));
+						}
 					}
 					if (dirs.isEmpty ()) {
 						if (game.tiles [x - this->xi] [y - this->yi].empty ()) {
@@ -184,6 +201,7 @@ void GameModel::Monster::update (GameModel &game) {
 						monster = new Monster (MonsterEnum::LithorFire, this->x, this->y - 64, 32, 64);
 						break;
 					}
+					monster->shootingDir = this->shootingDir;
 					monster->shootingTimer = 32;
 					game.monsters.append (monster);
 				}
@@ -280,5 +298,23 @@ void GameModel::Player::hit () {
 	if (!this->immuneCount) {
 		this->lives--;
 		this->immuneCount = 31;
+	}
+}
+const GameModel::Player *GameModel::Monster::closestPlayer (GameModel &model) const {
+	QList <const Player *> players;
+	int distance = 1000000;
+	for (const Player &player : model.players) {
+		int d = std::abs (player.x - this->x) + std::abs (player.y - this->y);
+		if (d < distance) {
+			players = {&player};
+			distance = d;
+		} else if (d == distance) {
+			players.append (&player);
+		}
+	}
+	if (players.isEmpty ()) {
+		return nullptr;
+	} else {
+		return players.at (rand () % players.count ());
 	}
 }

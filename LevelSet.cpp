@@ -96,7 +96,6 @@ Level Level::fromJson (const QJsonObject &data) {
 			if (i < tiles.count ()) {
 				QJsonObject tile = tiles.at (i).toObject ();
 				level.tiles [x] [y].type = TypeEnum (tile.value ("type").toInt ());
-				level.tiles [x] [y].type = TypeEnum::Empty;
 				if (x == 0 || x == 18 || y == 0 || y == 18) {
 					level.tiles [x] [y].type = TypeEnum::Immune;
 				}

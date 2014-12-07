@@ -65,6 +65,7 @@ public:
 		Monster (MonsterEnum type, int x, int y, int w = 32, int h = 32) : alive (true), type (type), x (x), y (y), w (w), h (h), xi (0), yi (0), shootingDir (0), shootingTimer (0) {
 		}
 		void update (GameModel &model);
+		const Player *closestPlayer (GameModel &model) const;
 	};
 	Tile tiles [19] [19];
 	QList <Player> players;
