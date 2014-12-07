@@ -2,8 +2,17 @@
 #include "GameView.h"
 
 #include <QKeyEvent>
+#include "LevelSet.h"
 
-GameView::GameView (QWidget *parent) : QGLWidget (parent) {
+GameView::GameView (QWidget *parent) : QGLWidget ([] {
+	QGLFormat format;
+	format.setSwapInterval (1);
+	return format;
+} (), parent) {
+	LevelSet set3;
+	set3.load ("../test.lvls");
+	this->model.load (set3.levels.at (0));
+	
 	this->setMinimumSize (608, 608);
 	this->startTimer (20);
 	this->grabKeyboard ();
@@ -90,7 +99,7 @@ void GameView::paintGL () {
 			glPopMatrix ();
 		} else if (monster->type == MonsterEnum::Lithor) {
 			this->draw (this->m_texs [13], monster->x, monster->y, 32, 32);
-			if (monster->shootingDir != 0) {
+			/*if (monster->shootingDir != 0) {
 				glBindTexture (GL_TEXTURE_2D, this->m_texs [14]);
 				glPushMatrix ();
 				glTranslatef (monster->x + 16, monster->y + 16, 0);
@@ -103,11 +112,17 @@ void GameView::paintGL () {
 				glTexCoord2f (1, 1); glVertex2f ( 0.5,  2.5);
 				glEnd ();
 				glPopMatrix ();
-			}
+			}*/
+		} else if (monster->type == MonsterEnum::LithorFire) {
+			this->draw (this->m_texs [14], monster->x, monster->y, monster->w, monster->h);
 		}
 	}
 	for (const GameModel::Player &player : this->model.players) {
-		this->draw (this->m_texs [4], player.x, player.y, 32, 32);
+		if (player.immuneCount % 5 == 1) {
+			this->draw (this->m_texs [94], player.x, player.y, 32, 32);
+		} else {
+			this->draw (this->m_texs [4], player.x, player.y, 32, 32);
+		}
 	}
 	this->update ();
 }
@@ -137,11 +152,11 @@ void GameView::initializeGL () {
 	this->load (21, "0022.bmp");
 	this->load (22, "0031.bmp");
 	this->load (23, "0015.png");
+	this->load (94, "0016A.png");
 	glClearColor (0, 0, 0, 1);
 	glBlendFunc (GL_ONE, GL_ONE);
 	glEnable (GL_BLEND);
 	glDisable (GL_DEPTH_TEST);
-	this->model.start ();
 }
 void GameView::load (int index, QString name) {
 	m_texs [index] = this->bindTexture (

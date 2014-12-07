@@ -2,33 +2,15 @@
 #pragma once
 
 #include <QList>
+#include "Enum.h"
 
-
-enum class TypeEnum {
-	Empty,
-	Solid,
-	Statue,
-	Immune
-};
-
-enum class ItemEnum {
-	None,
-	PlusBomb,
-	PlusLength,
-	PlusLife
-};
-
-enum class MonsterEnum {
-	Cr = 1,
-	Fish,
-	Lithor,
-	Fireball
-};
+class Level;
 
 class GameModel {
 public:
 	GameModel ();
 	void start ();
+	void load (const Level &level);
 	void update ();
 	void fire (QSet<int> &res, int x, int y, int xi, int yi, int length);
 	class Player {
@@ -39,14 +21,17 @@ public:
 		int bombCount;
 		int bombLength;
 		int lives;
+		int immuneCount;
 		Player () :
 			x (0), y (0),
 			keyUp (false), keyLeft (false),
 			keyDown (false), keyRight (false),
-			keyBomb (false), bombCount (1), bombLength (2), lives (0)
+			keyBomb (false), bombCount (1), bombLength (2), lives (0),
+			immuneCount (0)
 		{
 		}
 		void update (GameModel *game);
+		void hit ();
 	};
 	class Tile {
 	public:
@@ -74,36 +59,15 @@ public:
 		bool alive;
 		MonsterEnum type;
 		int x, y;
+		int w, h;
 		int xi, yi;
-		int shootingTimer;
 		int shootingDir;
-		Monster (MonsterEnum type, int x, int y) : alive (true), type (type), x (x), y (y), xi (0), yi (0), shootingDir (0) {
+		int shootingTimer;
+		Monster (MonsterEnum type, int x, int y, int w = 32, int h = 32) : alive (true), type (type), x (x), y (y), w (w), h (h), xi (0), yi (0), shootingDir (0), shootingTimer (0) {
 		}
 		void update (GameModel &model);
 	};
 	Tile tiles [19] [19];
 	QList <Player> players;
 	QList <Monster *> monsters;
-};
-
-struct Level {
-	struct Tile {
-		quint8 type;
-		quint8 item;
-	};
-	struct Monster {
-		quint8 type;
-		quint8 x;
-		quint8 y;
-	};
-	Tile tiles [19] [19];
-	QList <Monster> monsters;
-};
-
-class LevelSet {
-public:
-	QList <Level> levels;
-	quint16 version;
-	LevelSet (const QByteArray &data);
-	QByteArray serialize () const;
 };

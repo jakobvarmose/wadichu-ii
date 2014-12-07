@@ -4,10 +4,13 @@ SOURCES += \
     main.cpp \
     Window.cpp \
     GameModel.cpp \
-    GameView.cpp
+    GameView.cpp \
+    LevelSet.cpp
 
 HEADERS += \
     main.h \
     Window.h \
     GameModel.h \
-    GameView.h
+    GameView.h \
+    LevelSet.h \
+    Enum.h

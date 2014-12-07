@@ -9,9 +9,6 @@ class GameView : public QGLWidget {
 	Q_OBJECT
 public:
 	GameView (QWidget *parent = 0);
-	~GameView () {
-		qDebug ("XX");
-	}
 
 protected:
 	void paintGL ();
@@ -25,7 +22,7 @@ private:
 
 	void draw (GLuint tex, int x, int y, int width, int height);
 	void load (int index, QString name);
-	GLuint m_texs [32];
+	GLuint m_texs [100];
 	
 	GameModel model;
 };

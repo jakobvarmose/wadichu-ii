@@ -1,72 +1,43 @@
 // Copyright 2014 Jakob Varmose Bentzen | Released under the MIT License
 #include "GameModel.h"
 
-#include <QDataStream>
 #include <QSet>
+#include "LevelSet.h"
 
 GameModel::GameModel () {
 	this->players.clear ();
-	this->players.append (GameModel::Player ());
-	this->players.append (GameModel::Player ());
+	this->players.append (Player ());
+	this->players.append (Player ());
+	this->players [0].x = 1 * 32;
+	this->players [0].y = 17 * 32;
+	this->players [1].x = 17 * 32;
+	this->players [1].y = 1 * 32;
+}
+void GameModel::load (const Level &level) {
+	for (int x = 0; x < 19; ++x) {
+		for (int y = 0; y < 19; ++y) {
+			this->tiles [x] [y] = Tile ();
+			this->tiles [x] [y].type = level.tiles [x] [y].type;
+			this->tiles [x] [y].item = level.tiles [x] [y].item;
+		}
+	}
+	for (Monster *monster : this->monsters) {
+		delete monster;
+	}
+	this->monsters.clear ();
+	for (const Level::Monster &monster : level.monsters) {
+		Monster *m = new Monster (monster.type, 32 * monster.x, 32 * monster.y);
+		this->monsters.append (m);
+	}
 	this->players [0].x = 1 * 32;
 	this->players [0].y = 17 * 32;
 	this->players [1].x = 17 * 32;
 	this->players [1].y = 1 * 32;
 }
 void GameModel::start () {
-	for (int x = 0; x < 19; ++x) {
-		for (int y = 0; y < 19; ++y) {
-			if (
-				x == 0 ||
-				x == 18 ||
-				y == 0 ||
-				y == 18 ||
-				(x % 2 == 0 && y % 2 == 0)
-			) {
-				this->tiles [x] [y].type = TypeEnum::Immune;
-				this->tiles [x] [y].item = ItemEnum::None;
-			} else if (
-				(x <= 2 || x >= 16) &&
-				(y <= 2 || y >= 16)
-			) {
-				this->tiles [x] [y].type = TypeEnum::Empty;
-				this->tiles [x] [y].item = ItemEnum::None;
-			} else {
-				int r = rand () % 1000;
-				if (r < 700) {
-					this->tiles [x] [y].type = TypeEnum::Empty;
-					this->tiles [x] [y].item = ItemEnum::None;
-				} else if (r < 720) {
-					this->tiles [x] [y].type = TypeEnum::Statue;
-					this->tiles [x] [y].item = ItemEnum::None;
-				} else {
-					this->tiles [x] [y].type = TypeEnum::Solid;
-					int q = rand () % 1000;
-					if (q < 200) {
-						this->tiles [x] [y].item = ItemEnum::PlusBomb;
-					} else if (q < 400) {
-						this->tiles [x] [y].item = ItemEnum::PlusLength;
-					} else if (q < 420) {
-						this->tiles [x] [y].item = ItemEnum::PlusLife;
-					} else {
-						this->tiles [x] [y].item = ItemEnum::None;
-					}
-				}
-			}
-		}
-	}
-	for (int i = 0; i < 10; ++i) {
-		MonsterEnum type;
-		int q = rand () % 1000;
-		if (q < 250) {
-			type = MonsterEnum::Cr;
-		} else if (q < 500) {
-			type = MonsterEnum::Fish;
-		} else {
-			type = MonsterEnum::Lithor;
-		}
-		this->monsters.push_back (new Monster (type, 64 * i + 32, 32));
-	}
+	Level level;
+	level.random ();
+	this->load (level);
 }
 void GameModel::update () {
 	for (int x = 0; x < 19; ++x) {
@@ -136,51 +107,101 @@ void GameModel::fire (QSet<int> &res, int x, int y, int xi, int yi, int length) 
 }
 void GameModel::Monster::update (GameModel &game) {
 	if (this->alive) {
-		if (this->x % 32 == 0 && this->y % 32 == 0) {
-			int x = this->x / 32;
-			int y = this->y / 32;
-			QList <QPair <int, int>> dirs;
-			if (xi >= 0 && game.tiles [x + 1] [y].empty ()) {
-				dirs.append (qMakePair (1, 0));
-			}
-			if (xi <= 0 && game.tiles [x - 1] [y].empty ()) {
-				dirs.append (qMakePair (-1, 0));
-			}
-			if (yi >= 0 && game.tiles [x] [y + 1].empty ()) {
-				dirs.append (qMakePair (0, 1));
-			}
-			if (yi <= 0 && game.tiles [x] [y - 1].empty ()) {
-				dirs.append (qMakePair (0, -1));
-			}
-			if (dirs.isEmpty ()) {
-				if (game.tiles [x - this->xi] [y - this->yi].empty ()) {
-					dirs.append (qMakePair (-this->xi, -this->yi));
-				}
-			}
-			if (dirs.isEmpty ()) {
-				this->xi = 0;
-				this->yi = 0;
-			} else {
-				QPair <int, int> dir = dirs.at (rand () % dirs.count ());
-				this->xi = dir.first;
-				this->yi = dir.second;
-			}
-			if (this->type == MonsterEnum::Lithor) {
-				for (const Player &player : game.players) {
-					if (player.x > this->x + 16 && player.x < this->x + 80
-					 && player.y > this->y - 16 && player.y < this->y + 16) {
-						this->shootingTimer = 100;
-						this->shootingDir = 4;
+		switch (this->type) {
+		case MonsterEnum::Cr:
+		case MonsterEnum::Fish:
+		case MonsterEnum::Lithor:
+			if (this->shootingTimer == 0) {
+				if (this->x % 32 == 0 && this->y % 32 == 0) {
+					int x = this->x / 32;
+					int y = this->y / 32;
+					QList <QPair <int, int>> dirs;
+					if (xi >= 0 && game.tiles [x + 1] [y].empty ()) {
+						dirs.append (qMakePair (1, 0));
+					}
+					if (xi <= 0 && game.tiles [x - 1] [y].empty ()) {
+						dirs.append (qMakePair (-1, 0));
+					}
+					if (yi >= 0 && game.tiles [x] [y + 1].empty ()) {
+						dirs.append (qMakePair (0, 1));
+					}
+					if (yi <= 0 && game.tiles [x] [y - 1].empty ()) {
+						dirs.append (qMakePair (0, -1));
+					}
+					if (dirs.isEmpty ()) {
+						if (game.tiles [x - this->xi] [y - this->yi].empty ()) {
+							dirs.append (qMakePair (-this->xi, -this->yi));
+						}
+					}
+					if (dirs.isEmpty ()) {
 						this->xi = 0;
 						this->yi = 0;
+					} else {
+						QPair <int, int> dir = dirs.at (rand () % dirs.count ());
+						this->xi = dir.first;
+						this->yi = dir.second;
 					}
 				}
+				if (this->type == MonsterEnum::Lithor) {
+					for (const Player &player : game.players) {
+						if (player.x > this->x + 16 && player.x < this->x + 80
+						 && player.y > this->y - 16 && player.y < this->y + 16) {
+							this->shootingDir = 1;
+							this->shootingTimer = 48;
+						}
+						if (player.x > this->x - 16 && player.x < this->x + 16
+						 && player.y > this->y + 16 && player.y < this->y + 80) {
+							this->shootingDir = 2;
+							this->shootingTimer = 48;
+						}
+						if (player.x > this->x - 48 && player.x < this->x - 16
+						 && player.y > this->y - 16 && player.y < this->y + 16) {
+							this->shootingDir = 3;
+							this->shootingTimer = 48;
+						}
+						if (player.x > this->x - 16 && player.x < this->x + 16
+						 && player.y > this->y - 48 && player.y < this->y - 16) {
+							this->shootingDir = 4;
+							this->shootingTimer = 48;
+						}
+					}
+				}
+				this->x += xi;
+				this->y += yi;
+			} else {
+				this->shootingTimer--;
+				if (shootingTimer == 32) {
+					Monster *monster;
+					switch (this->shootingDir) {
+					case 1:
+						monster = new Monster (MonsterEnum::LithorFire, this->x + this->w, this->y, 64, 32);
+						break;
+					case 2:
+						monster = new Monster (MonsterEnum::LithorFire, this->x, this->y + this->h, 32, 64);
+						break;
+					case 3:
+						monster = new Monster (MonsterEnum::LithorFire, this->x - 64, this->y, 64, 32);
+						break;
+					default:
+						monster = new Monster (MonsterEnum::LithorFire, this->x, this->y - 64, 32, 64);
+						break;
+					}
+					monster->shootingTimer = 32;
+					game.monsters.append (monster);
+				}
 			}
-		}
-		this->x += xi;
-		this->y += yi;
-		if (game.tiles [(this->x + 16) / 32] [(this->y + 16) / 32].fire) {
-			this->alive = false;
+			if (game.tiles [(this->x + 16) / 32] [(this->y + 16) / 32].fire) {
+				this->alive = false;
+			}
+			break;
+		case MonsterEnum::LithorFire:
+			this->shootingTimer--;
+			if (this->shootingTimer == 0) {
+				this->alive = false;
+			}
+			break;
+		default:
+			break;
 		}
 	}
 }
@@ -240,51 +261,26 @@ void GameModel::Player::update (GameModel *game) {
 		this->lives++;
 		tile.item = ItemEnum::None;
 	}
-}
-LevelSet::LevelSet (const QByteArray &data) {
-	QDataStream stream (data);
-	stream >> this->version;
-	quint8 levelsSize;
-	stream >> levelsSize;
-	for (int i = 0; i < levelsSize; ++i) {
-		Level level;
-		for (int x = 0; x < 19; ++x) {
-			for (int y = 0; y < 19; ++y) {
-				stream >> level.tiles [x] [y].type;
-				stream >> level.tiles [x] [y].item;
-			}
-		}
-		quint8 monstersSize;
-		stream >> monstersSize;
-		for (int i = 0; i < monstersSize; ++i) {
-			Level::Monster monster;
-			stream >> monster.type;
-			stream >> monster.x;
-			stream >> monster.y;
-			level.monsters.append (monster);
-		}
-		this->levels.append (level);
+	if (this->immuneCount) {
+		this->immuneCount--;
 	}
-}
-QByteArray LevelSet::serialize () const {
-	QByteArray data;
-	QDataStream stream (&data, QIODevice::WriteOnly);
-	stream << version;
-	stream << quint8 (levels.size ());
-	for (const Level &level : this->levels) {
-		for (int x = 0; x < 19; ++x) {
-			for (int y = 0; y < 19; ++y) {
-				const Level::Tile &tile = level.tiles [x] [y];
-				stream << tile.type;
-				stream << tile.item;
-			}
-		}
-		stream << quint8 (level.monsters.size ());
-		for (const Level::Monster &monster : level.monsters) {
-			stream << monster.type;
-			stream << monster.x;
-			stream << monster.y;
+	for (Monster *monster : game->monsters) {
+		if (this->x > monster->x - 16 &&
+			this->x < monster->x + monster->w - 16 &&
+			this->y > monster->y - 16 &&
+			this->y < monster->y + monster->h - 16 &&
+			(monster->type == MonsterEnum::Cr || monster->type == MonsterEnum::LithorFire)
+		) {
+			this->hit ();
 		}
 	}
-	return data;
+	if (game->tiles [x] [y].fireCount) {
+		this->hit ();
+	}
+}
+void GameModel::Player::hit () {
+	if (!this->immuneCount) {
+		this->lives--;
+		this->immuneCount = 31;
+	}
 }
