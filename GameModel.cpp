@@ -43,10 +43,9 @@ void GameModel::update () {
 	for (int x = 0; x < 19; ++x) {
 		for (int y = 0; y < 19; ++y) {
 			Tile &tile = this->tiles [x] [y];
-			if (tile.fire) {
+			if (tile.fireCount) {
 				tile.fireCount--;
 				if (tile.fireCount == 0) {
-					tile.fire = false;
 					tile.type = TypeEnum::Empty;
 				}
 			}
@@ -69,7 +68,6 @@ void GameModel::update () {
 					for (int i : res) {
 						int x = i / 100;
 						int y = i % 100;
-						this->tiles [x] [y].fire = true;
 						this->tiles [x] [y].fireCount = 25;
 					}
 					tile.bomb = false;
@@ -79,7 +77,7 @@ void GameModel::update () {
 	}
 	for (int i = 0; i < this->monsters.size (); ++i) {
 		this->monsters [i]->update (*this);
-		if (!this->monsters [i]->alive && !this->tiles [(this->monsters [i]->x + 16) / 32] [(this->monsters [i]->y + 16) / 32].fire) {
+		if (!this->monsters [i]->alive && !this->tiles [(this->monsters [i]->x + 16) / 32] [(this->monsters [i]->y + 16) / 32].fireCount) {
 			this->monsters.removeAt (i--);
 		}
 	}
@@ -190,7 +188,7 @@ void GameModel::Monster::update (GameModel &game) {
 					game.monsters.append (monster);
 				}
 			}
-			if (game.tiles [(this->x + 16) / 32] [(this->y + 16) / 32].fire) {
+			if (game.tiles [(this->x + 16) / 32] [(this->y + 16) / 32].fireCount) {
 				this->alive = false;
 			}
 			break;

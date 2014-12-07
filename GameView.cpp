@@ -52,7 +52,7 @@ void GameView::paintGL () {
 					this->draw (this->m_texs [23], 32 * x, 32 * y, 32, 32);
 				}
 			}
-			if (this->model.tiles [x] [y].fire) {
+			if (this->model.tiles [x] [y].fireCount) {
 				this->draw (this->m_texs [7], 32 * x, 32 * y, 32, 32);
 			}
 		}

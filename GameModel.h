@@ -37,13 +37,12 @@ public:
 	public:
 		TypeEnum type;
 		ItemEnum item;
-		bool fire;
 		bool bomb;
 		int bombCount;
 		int fireCount;
 		int bombLength;
 		Player *player;
-		Tile () : type (TypeEnum::Immune), item (ItemEnum::None), fire (false), bomb (false) {
+		Tile () : type (TypeEnum::Immune), item (ItemEnum::None), bomb (false), fireCount (0) {
 		}
 		bool empty () const {
 			return this->type == TypeEnum::Empty && this->bomb == false;
